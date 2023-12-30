@@ -1,0 +1,30 @@
+With Alfa AWUS036ACM dongles this script successfully set a connection that can be pinged across
+#Per Teledatics the nrc 7292 doesnt support ad hoc mode so this will not work for them
+#!/bin/bash
+
+INTERFACE=wlan1
+PHY=MT7612U #for AWUS036ACM
+MESH_NAME=natak_mesh  #all units need to share mesh name
+MY_IP=192.168.200.2/24  #this will need to be unique for each machine
+
+systemctl stop wpa_supplicant
+systemctl stop NetworkManager
+
+modprobe batman-adv
+
+ip link set $INTERFACE down
+ifconfig $INTERFACE mtu 1532
+iwconfig $INTERFACE mode ad-hoc
+iwconfig $INTERFACE essid $MESH_NAME
+iwconfig $INTERFACE ap 02:12:34:56:78:9A 
+iwconfig $INTERFACE channel 1 
+iw dev $INTERFACE mesh join $MESH_NAME
+sleep 1s
+ip link set up dev $INTERFACE
+ip link set $INTERFACE up
+sleep 1s
+batctl if add $INTERFACE
+sleep 1s
+ifconfig bat0 up
+sleep 5s
+ifconfig bat0 $MY_IP
